@@ -28,13 +28,14 @@ export default class Popular extends React.Component{
         this.state={
             selectedLanguage:'ALL',
             error:null,
-            content:null
+            content:{}
         }
         this.isLoding = this.isLoding.bind(this);
     }
 
     isLoding() {
-        return this.state.content === null && this.state.error === null;
+        const{selectedLanguage,error,content} = this.state;
+        return  !content[selectedLanguage] && error === null;
     }
 
     componentDidMount(){
@@ -45,19 +46,25 @@ export default class Popular extends React.Component{
         this.setState({
             selectedLanguage:language,
             error:null,
-            content:null
         })
-        fetchContent(language)
-                    .then((content) => this.setState({
-                        error:null,
-                        content:content
-                    }))
-                    .catch((err) => {
-                        console.warn(err);
-                        this.setState({
-                            err: `error fatching repo ${err}`
+
+        if(!this.state.content[language]){
+            fetchContent(language)
+                        .then((data) => {
+                            this.setState(({content}) => ({
+                                content: {
+                                    ...content,
+                                    [language]: data
+                                }
+                            }))
                         })
-                    })
+                        .catch((err) => {
+                            console.warn(err);
+                            this.setState({
+                                err: `error fatching repo ${err}`
+                            })
+                        })
+        }                    
     }
 
     render(){
@@ -72,7 +79,7 @@ export default class Popular extends React.Component{
                 {this.isLoding() && <p>LOADING...</p>}
                 {error && <p>{error}</p>}
 
-                {content && <pre>{JSON.stringify(content,null,2)}</pre>}
+                {content[selectedLanguage] && <pre>{JSON.stringify(content[selectedLanguage],null,2)}</pre>}
             </React.Fragment>
         )
     }
